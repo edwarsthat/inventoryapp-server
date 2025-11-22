@@ -1,0 +1,16 @@
+### Register New User - Edwar Ariza
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "nombre": "Edwar",
+  "apellido": "Ariza",
+  "correo": "edwarsthat@gmail.com",
+  "username": "edwarsthat",
+  "password": "calidadstopyse",
+  "rol": "admin",
+  "telefono": "3001234567",
+  "token": ""
+}
+
+###

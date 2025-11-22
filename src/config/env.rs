@@ -7,6 +7,7 @@ pub struct AppConfig {
     pub url: String,
     pub port: u16,
     pub jwt_secret: String,
+    pub token_create_user: String,
 }
 
 pub fn load_config() -> Result<AppConfig, EnvVarError> {
@@ -75,11 +76,25 @@ pub fn load_config() -> Result<AppConfig, EnvVarError> {
         }
     };
 
+    let token_create_user = match env::var("TOKEN_CREATE_USER") {
+        Ok(val) => val,
+        Err(_) => {
+            return Err(EnvVarError::new(
+                1006,
+                "No se encontró en el archivo .env",
+                EnvVarErrorKind::Missing,
+                "TOKEN_CREATE_USER",
+                "env.rs::load_config"
+            ));
+        }
+    };
+
     Ok(AppConfig { 
         database_url, 
         url,
         port,
         jwt_secret,
+        token_create_user,
     })
 }
 

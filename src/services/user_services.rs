@@ -1,4 +1,9 @@
-use crate::{models::errors::api_errors::ApiError, repositories::user_repository::UserRepository};
+use crate::{
+    config::env,
+    models::{errors::api_errors::ApiError, users::User},
+    repositories::user_repository::UserRepository,
+    services::jwt_service::create_jwt,
+};
 
 pub struct AuthService {
     user_repo: UserRepository,
@@ -9,7 +14,47 @@ impl AuthService {
         Self { user_repo }
     }
 
-    pub async fn login(&self, username: &str, passwrod: &str) -> Result<String, ApiError> {
+    pub async fn register(
+        &self,
+        nombre: &str,
+        apellido: &str,
+        correo: &str,
+        username: &str,
+        contrasena_hash: &str,
+        rol: &str,
+        telefono: Option<&str>,
+        token_create_user: &str,
+    ) -> Result<(), ApiError> {
+        let config = env::load_config()
+            .map_err(|e| ApiError::InternalError(format!("Error cargando configuración: {}", e)))?;
+
+        if token_create_user != config.token_create_user {
+            return Err(ApiError::Unauthorized(
+                "Token de creación de usuario inválido".to_string(),
+            ));
+        }
+        match self
+            .user_repo
+            .create(
+                nombre,
+                apellido,
+                correo,
+                username,
+                contrasena_hash,
+                rol,
+                telefono,
+            )
+            .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(ApiError::InternalError(format!(
+                "Error al registrar usuario: {}",
+                e
+            ))),
+        }
+    }
+
+    pub async fn login(&self, username: &str, passwrod: &str) -> Result<(String, User), ApiError> {
         let user = match self.user_repo.find_by_username(username).await {
             Err(e) => return Err(e.into()), // Conversión explícita
             Ok(None) => return Err(ApiError::Unauthorized("Credenciales inválidas".to_string())),
@@ -21,8 +66,23 @@ impl AuthService {
             return Err(ApiError::Unauthorized("Usuario inactivo".to_string())); // Error 401
         }
 
+        // 3. Verificar contraseña
+        if !bcrypt::verify(passwrod, &user.contrasena_hash).unwrap_or(false) {
+            return Err(ApiError::Unauthorized("Credenciales inválidas".to_string()));
+        }
+
+        // Aquí se generaría un token JWT
+        let jwt_token = match create_jwt(&user.id_usuario, &user.rol) {
+            Ok(token) => token,
+            Err(e) => {
+                return Err(ApiError::InternalError(format!(
+                    "Error generando token: {}",
+                    e
+                )))
+            }
+        };
         println!("Usuario autenticado: {:?}", user);
 
-        Ok("token".to_string())
+        Ok((jwt_token, user))
     }
 }

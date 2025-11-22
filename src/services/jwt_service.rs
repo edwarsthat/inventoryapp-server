@@ -13,7 +13,7 @@ pub struct Claims {
     pub role: String,
 }
 
-pub fn create_jwt(user_id: &str, role: &str) -> Result<String, jsonwebtoken::errors::Error> {
+pub fn create_jwt(user_id: &i32, role: &str) -> Result<String, jsonwebtoken::errors::Error> {
     let config = env::load_config().expect("Failed to load config");
     let secret = config.jwt_secret;
     
