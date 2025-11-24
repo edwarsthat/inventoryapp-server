@@ -85,4 +85,23 @@ impl AuthService {
 
         Ok((jwt_token, user))
     }
+
+    pub async fn change_password(
+        &self,
+        username: &str,
+        new_password_hash: &str,
+    ) -> Result<(), ApiError> {
+
+        match self
+            .user_repo
+            .update_password(username, new_password_hash, false)
+            .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(ApiError::InternalError(format!(
+                "Error al cambiar la contraseña: {}",
+                e
+            ))),
+        }
+    }
 }

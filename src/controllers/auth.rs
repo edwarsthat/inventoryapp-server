@@ -1,7 +1,7 @@
 use crate::{
     models::{
         errors::api_errors::ApiError,
-        request::auth::{LoginRequest, RegisterRequest},
+        request::auth::{ChangePasswordRequest, LoginRequest, RegisterRequest},
         responses::auth::{LoginResponse, RegisterResponse, UserResponseLogin},
     },
     repositories::user_repository::UserRepository,
@@ -95,4 +95,37 @@ pub async fn login(
             id_usuario: user.id_usuario,
         },
     }))
+}
+
+pub async fn change_password(
+    State(state): State<AppState>,
+    Json(request): Json<ChangePasswordRequest>,
+) -> Result<Json<crate::models::responses::common_responses::ApiResponse<String>>, ApiError> {
+    println!("Attempting to change password for user");
+
+    let user_repo = UserRepository::new(state.db.clone());
+    let auth_service = AuthService::new(user_repo);
+
+    let password_hash = bcrypt::hash(&request.new_password, bcrypt::DEFAULT_COST)
+        .map_err(|_| ApiError::InternalError("Error al hashear contraseña".to_string()))?;
+
+    match auth_service
+        .change_password(&request.username, &password_hash)
+        .await
+    {
+        Ok(_) => {
+            println!("Password changed successfully");
+        }
+        Err(e) => {
+            println!("Error changing password: {:?}", e);
+            return Err(e);
+        }
+    }
+
+    Ok(Json(
+        crate::models::responses::common_responses::ApiResponse::success(
+            "Contraseña cambiada exitosamente",
+            None,
+        ),
+    ))
 }

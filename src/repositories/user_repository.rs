@@ -63,7 +63,6 @@ impl UserRepository {
         Ok(user)
     }
 
-    /// Verificar si existe un username
     pub async fn exists_by_username(&self, username: &str) -> Result<bool, ServerError> {
         let result: (bool,) =
             sqlx::query_as("SELECT EXISTS(SELECT 1 FROM usuarios WHERE username = $1)")
@@ -81,4 +80,31 @@ impl UserRepository {
 
         Ok(result.0)
     }
+
+    pub async fn update_password(
+        &self,
+        username: &str,
+        new_password_hash: &str,
+        debe_cambiar_contrasena: bool,
+    ) -> Result<(), ServerError> {
+        sqlx::query(
+            "UPDATE usuarios 
+             SET contrasena_hash = $1, debe_cambiar_contrasena = $2, fecha_ultimo_cambio = NOW() 
+             WHERE username = $3",
+        )
+        .bind(new_password_hash)
+        .bind(debe_cambiar_contrasena)
+        .bind(username)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| {
+            ServerError::new(
+                500,
+                &format!("Error actualizando la contraseña: {}", e),
+                ServerErrorKind::DatabaseError,
+                "user_repository::update_password",
+            )
+        })?;
+        Ok(())
+    }   
 }

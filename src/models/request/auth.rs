@@ -1,5 +1,4 @@
-use serde::{Deserialize};
-
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
@@ -17,4 +16,11 @@ pub struct RegisterRequest {
 pub struct LoginRequest {
     pub username: String,
     pub password: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ChangePasswordRequest {
+    pub username: String,
+    #[serde(rename = "newPassword")]
+    pub new_password: String,
 }
