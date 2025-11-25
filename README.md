@@ -58,6 +58,14 @@ CREATE TABLE usuarios (
     debe_cambiar_contrasena BOOLEAN NOT NULL DEFAULT FALSE,
     fecha_ultimo_cambio TIMESTAMP
 );
+    fecha_ultimo_cambio TIMESTAMP
+);
+
+CREATE TABLE lista_productos (
+    id UUID PRIMARY KEY,
+    barcode VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL
+);
 ```
 
 4. **Compilar y ejecutar**
@@ -105,6 +113,29 @@ Content-Type: application/json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "message": "Login exitoso"
+}
+```
+
+### Productos
+
+#### Crear Producto
+```http
+POST /api/lista_productos
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "barcode": "123456789",
+  "name": "Producto Ejemplo"
+}
+```
+
+**Respuesta exitosa:**
+```json
+{
+  "status": "success",
+  "message": "Producto creado exitosamente",
+  "data": ""
 }
 ```
 
@@ -185,7 +216,7 @@ La API utiliza códigos HTTP estándar:
 ## 🚧 En Desarrollo
 
 - [ ] Registro de usuarios
-- [ ] Gestión de inventario
+- [x] Gestión de inventario (Creación de productos)
 - [ ] Roles y permisos
 - [ ] Logs y auditoría
 - [ ] Tests unitarios e integración
